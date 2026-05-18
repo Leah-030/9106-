@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Interactive Ocean Walkway</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #111;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .scene {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background:
+      linear-gradient(to bottom, #4a4a4a 0%, #252525 45%, #151515 100%);
+  }
+
+  .ceiling {
+    position: absolute;
+    top: 0;
+    left: 8%;
+    width: 84%;
+    height: 19%;
+    background: linear-gradient(to bottom, #666, #2b2b2b);
+    clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+    z-index: 1;
+  }
+
+  .back-wall {
+    position: absolute;
+    top: 10%;
+    left: 28%;
+    width: 44%;
+    height: 50%;
+    background: #111;
+    border: 8px solid #050505;
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.85);
+    z-index: 2;
+    overflow: hidden;
+  }
+
+  .front-screen {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(to bottom, rgba(100, 220, 255, 0.95), rgba(0, 105, 180, 0.98), rgba(0, 35, 95, 1));
+  }
+
+  .front-screen::before,
+  .side-screen::before,
+  .single-screen::before {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    background:
+      radial-gradient(circle at 45% 12%, rgba(255,255,255,0.35), transparent 22%),
+      repeating-linear-gradient(
+        115deg,
+        rgba(255,255,255,0.13) 0px,
+        rgba(255,255,255,0.13) 16px,
+        transparent 16px,
+        transparent 48px
+      );
+    animation: waterLight 9s linear infinite;
+    opacity: 0.55;
+  }
+
+  @keyframes waterLight {
+    from {
+      transform: translate(-30px, -20px) rotate(0deg);
+    }
+    to {
+      transform: translate(35px, 35px) rotate(8deg);
+    }
+  }
+
+  .school-text {
+    position: absolute;
+    top: 23%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 46px;
+    letter-spacing: 8px;
+    color: rgba(255,255,255,0.92);
+    font-weight: bold;
+    z-index: 4;
+  }
+
+  .school-building {
+    position: absolute;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 190px;
+    height: 110px;
+    background: #c99b66;
+    border: 4px solid #72503b;
+    z-index: 4;
+    border-radius: 4px;
+  }
+
+  .school-building::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -48px;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 105px solid transparent;
+    border-right: 105px solid transparent;
+    border-bottom: 50px solid #8b5e3c;
+  }
+
+  .school-building::after {
+    content: "";
+    position: absolute;
+    left: 78px;
+    bottom: 0;
+    width: 34px;
+    height: 55px;
+    background: #5c3b2a;
+    border-radius: 15px 15px 0 0;
+  }
+
+  .side-floor-left,
+  .side-floor-right {
+    position: absolute;
+    top: 48%;
+    height: 68%;
+    background: linear-gradient(to bottom, #2c3f46, #15191b);
+    z-index: 3;
+  }
+
+  .side-floor-left {
+    left: 0;
+    width: 42%;
+    clip-path: polygon(0 0, 86% 0, 66% 100%, 0 100%);
+  }
+
+  .side-floor-right {
+    right: 0;
+    width: 42%;
+    clip-path: polygon(14% 0, 100% 0, 100% 100%, 34% 100%);
+  }
+
+  .path {
+    position: absolute;
+    left: 36%;
+    top: 48%;
+    width: 28%;
+    height: 68%;
+    background:
+      linear-gradient(to bottom, rgba(235, 218, 185, 0.96), rgba(135, 119, 95, 0.96));
+    clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%);
+    z-index: 5;
+    box-shadow:
+      inset 0 0 35px rgba(255,255,255,0.18),
+      0 0 25px rgba(0,0,0,0.62);
+  }
+
+  .side-screen {
+    position: absolute;
+    top: 21%;
+    width: 27%;
+    height: 58%;
+    background:
+      linear-gradient(to bottom, rgba(85,210,255,0.95), rgba(0,95,170,1), rgba(0,30,90,1));
+    border: 10px solid #070707;
+    overflow: hidden;
+    z-index: 6;
+    box-shadow:
+      inset 0 0 35px rgba(255,255,255,0.22),
+      0 18px 35px rgba(0,0,0,0.65);
+  }
+
+  .left-screen {
+    left: 8%;
+    transform: skewY(12deg);
+    transform-origin: right center;
+  }
+
+  .right-screen {
+    right: 8%;
+    transform: skewY(-12deg);
+    transform-origin: left center;
+  }
+
+  .camera-hotspot {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .camera-icon {
+    width: 46px;
+    height: 30px;
+    margin: 0 auto 5px;
+    border-radius: 9px;
+    background: rgba(0,0,0,0.65);
+    border: 2px solid rgba(120,230,255,0.9);
+    box-shadow: 0 0 15px rgba(60,220,255,0.9);
+    position: relative;
+  }
+
+  .camera-icon::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #7ee9ff;
+    box-shadow: 0 0 12px #36dfff;
+  }
+
+  .camera-label {
+    font-size: 15px;
+    letter-spacing: 1px;
+    background: rgba(0,0,0,0.55);
+    padding: 3px 8px;
+    border-radius: 10px;
+  }
+
+  .seaweed {
+    position: absolute;
+    bottom: 0;
+    width: 18px;
+    height: 130px;
+    background: linear-gradient(#4df0a0, #0b8f5d);
+    border-radius: 60% 60% 0 0;
+    transform-origin: bottom;
+    animation: seaweedMove 3.2s ease-in-out infinite alternate;
+    z-index: 5;
+  }
+
+  .seaweed.small {
+    height: 82px;
+    width: 12px;
+  }
+
+  .seaweed.tall {
+    height: 180px;
+    width: 22px;
+  }
+
+  @keyframes seaweedMove {
+    from {
+      transform: rotate(-7deg);
+    }
+    to {
+      transform: rotate(9deg);
+    }
+  }
+
+  .coral {
+    position: absolute;
+    bottom: 0;
+    width: 90px;
+    height: 80px;
+    z-index: 5;
+  }
+
+  .coral::before,
+  .coral::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    border-radius: 25px 25px 0 0;
+  }
+
+  .coral::before {
+    left: 24px;
+    width: 16px;
+    height: 78px;
+    background: #ff7f7f;
+    box-shadow:
+      -22px 22px 0 #ff9f75,
+      22px 12px 0 #ff6f91,
+      42px 28px 0 #ffa6c9;
+  }
+
+  .coral::after {
+    left: 45px;
+    width: 14px;
+    height: 52px;
+    background: #ffb347;
+    box-shadow:
+      -34px 24px 0 #ff758f,
+      20px 26px 0 #ff9f1c;
+  }
+
+  .screen-fish {
+    --fishColor: #7bdff2;
+    position: absolute;
+    width: 120px;
+    height: 70px;
+    z-index: 5;
+    animation: screenFishSwim 12s linear infinite;
+  }
+
+  .screen-fish::before {
+    content: "";
+    position: absolute;
+    left: 24px;
+    top: 18px;
+    width: 78px;
+    height: 42px;
+    border: 3px solid var(--fishColor);
+    border-radius: 55% 48% 48% 55%;
+    background: rgba(35, 215, 255, 0.08);
+    box-shadow: 0 0 14px var(--fishColor);
+  }
+
+  .screen-fish::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 21px;
+    width: 34px;
+    height: 36px;
+    border: 3px solid var(--fishColor);
+    clip-path: polygon(0 50%, 100% 0, 72% 50%, 100% 100%);
+    background: rgba(35, 215, 255, 0.06);
+    box-shadow: 0 0 14px var(--fishColor);
+  }
+
+  .fish-head-line {
+    position: absolute;
+    left: 48px;
+    top: 20px;
+    width: 2px;
+    height: 38px;
+    background: var(--fishColor);
+    opacity: 0.9;
+    z-index: 8;
+  }
+
+  .screen-fish .eye {
+    position: absolute;
+    left: 36px;
+    top: 34px;
+    width: 7px;
+    height: 7px;
+    background: #000;
+    border-radius: 50%;
+    z-index: 9;
+  }
+
+  .fish-fin {
+    position: absolute;
+    width: 28px;
+    height: 20px;
+    border: 3px solid var(--fishColor);
+    background: rgba(35, 215, 255, 0.05);
+    box-shadow: 0 0 10px var(--fishColor);
+    z-index: 6;
+  }
+
+  .top-fin {
+    left: 66px;
+    top: 4px;
+    clip-path: polygon(0 100%, 100% 30%, 82% 100%);
+  }
+
+  .bottom-fin {
+    left: 66px;
+    bottom: 0;
+    clip-path: polygon(0 0, 82% 0, 100% 70%);
+  }
+
+  .screen-fish.blue {
+    --fishColor: #7bdff2;
+    animation-duration: 13s;
+  }
+
+  .screen-fish.pink {
+    --fishColor: #f7a1c4;
+    animation-duration: 10s;
+  }
+
+  .screen-fish.yellow {
+    --fishColor: #ffd166;
+  }
+
+  @keyframes screenFishSwim {
+    from {
+      transform: translateX(-150px);
+    }
+    to {
+      transform: translateX(650px);
+    }
+  }
+
+  .bubble {
+    position: absolute;
+    bottom: -30px;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.8);
+    border-radius: 50%;
+    z-index: 6;
+    animation: bubbleUp 6.5s linear infinite;
+  }
+
+  .bubble.small {
+    width: 8px;
+    height: 8px;
+    animation-duration: 5s;
+  }
+
+  .bubble.large {
+    width: 22px;
+    height: 22px;
+    animation-duration: 7.5s;
+  }
+
+  @keyframes bubbleUp {
+    0% {
+      transform: translateY(0) translateX(0);
+      opacity: 0;
+    }
+    15% {
+      opacity: 0.85;
+    }
+    100% {
+      transform: translateY(-520px) translateX(35px);
+      opacity: 0;
+    }
+  }
+
+  .mode-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 60;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 18px;
+    padding: 14px;
+    backdrop-filter: blur(6px);
+  }
+
+  .mode-title {
+    color: white;
+    font-size: 15px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+
+  .mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mode-buttons button,
+  .back-button,
+  .thumb-button {
+    padding: 9px 12px;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.14);
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+
+  .mode-buttons button {
+    width: 140px;
+    text-align: left;
+  }
+
+  .mode-buttons button:hover,
+  .mode-buttons button.active,
+  .back-button:hover,
+  .thumb-button:hover {
+    background: rgba(57, 210, 255, 0.75);
+    color: #062d3a;
+    font-weight: bold;
+  }
+
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: 4%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 22px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    font-size: 20px;
+    z-index: 50;
+  }
+
+  .person {
+    position: absolute;
+    width: 38px;
+    height: 76px;
+    z-index: 30;
+    transition:
+      left 0.9s ease,
+      bottom 0.9s ease,
+      transform 0.35s ease,
+      opacity 0.45s ease;
+    opacity: 1;
+    filter: drop-shadow(0 8px 7px rgba(0,0,0,0.38));
+  }
+
+  .person.hidden-person {
+    opacity: 0;
+  }
+
+  .person .head {
+    position: absolute;
+    top: 0;
+    left: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f2c8a0;
+    border: 2px solid rgba(95,55,35,0.35);
+  }
+
+  .person .body {
+    position: absolute;
+    top: 24px;
+    left: 12px;
+    width: 14px;
+    height: 28px;
+    background: #ffffff;
+    border-radius: 10px;
+  }
+
+  .person .leg {
+    position: absolute;
+    top: 49px;
+    width: 8px;
+    height: 28px;
+    background: #f2c8a0;
+    border-radius: 8px;
+    transform-origin: top;
+  }
+
+  .person .leg.left {
+    left: 11px;
+  }
+
+  .person .leg.right {
+    right: 11px;
+  }
+
+  .person.step-a .leg.left {
+    transform: rotate(22deg);
+  }
+
+  .person.step-a .leg.right {
+    transform: rotate(-14deg);
+  }
+
+  .person.step-b .leg.left {
+    transform: rotate(-14deg);
+  }
+
+  .person.step-b .leg.right {
+    transform: rotate(22deg);
+  }
+
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: rippleEffect var(--duration) ease-out forwards;
+    z-index: 22;
+    border: var(--stroke) solid rgba(65, 220, 255, var(--alpha));
+    box-shadow: 0 0 18px rgba(65,220,255,0.25);
+  }
+
+  @keyframes rippleEffect {
+    from {
+      width: 28px;
+      height: 28px;
+      opacity: 1;
+    }
+    to {
+      width: var(--size);
+      height: var(--size);
+      opacity: 0;
+    }
+  }
+
+  .sound {
+    position: absolute;
+    font-size: 24px;
+    opacity: 0;
+    z-index: 45;
+    color: #b8f3ff;
+    animation: soundPop 1.4s ease-out forwards;
+    pointer-events: none;
+    text-shadow: 0 0 8px rgba(0,0,0,0.7);
+  }
+
+  @keyframes soundPop {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1.18);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+
+  .mode-description {
+    position: absolute;
+    right: 24px;
+    bottom: 24px;
+    width: 360px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    z-index: 55;
+    font-size: 16px;
+    line-height: 1.5;
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+
+  .camera-view {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at center, rgba(0, 60, 90, 0.35), transparent 45%),
+      linear-gradient(to bottom, #171f24, #07090b);
+  }
+
+  .camera-wall {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      #1b252a;
+    background-size: 260px 260px;
+  }
+
+  .single-screen {
+    position: absolute;
+    left: 10%;
+    top: 10%;
+    width: 80%;
+    height: 54%;
+    border: 8px solid #050505;
+    border-radius: 6px;
+    background:
+      linear-gradient(to bottom, rgba(0, 155, 255, 0.92), rgba(0, 62, 140, 0.98), rgba(0, 18, 55, 1));
+    box-shadow:
+      0 0 35px rgba(0, 200, 255, 0.35),
+      inset 0 0 40px rgba(255,255,255,0.2);
+    overflow: hidden;
+    transform: perspective(900px) rotateY(5deg);
+    transform-origin: right center;
+  }
+
+  .camera-view-title {
+    position: absolute;
+    top: 22px;
+    left: 24px;
+    z-index: 40;
+    color: white;
+    font-size: 18px;
+    letter-spacing: 1px;
+    background: rgba(0,0,0,0.55);
+    padding: 10px 14px;
+    border-radius: 14px;
+  }
+
+  .back-button {
+    position: absolute;
+    top: 22px;
+    right: 24px;
+    z-index: 50;
+  }
+
+  .thumb-button {
+    position: absolute;
+    top: 74px;
+    right: 24px;
+    z-index: 50;
+  }
+
+  .camera-flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 80;
+  }
+
+  .camera-flash.flash-active {
+    animation: flashEffect 0.75s ease-out;
+  }
+
+  @keyframes flashEffect {
+    0% { opacity: 0; }
+    18% { opacity: 0.95; }
+    100% { opacity: 0; }
+  }
+
+  .capture-note {
+    position: absolute;
+    left: 50%;
+    top: 68%;
+    transform: translateX(-50%);
+    z-index: 70;
+    color: white;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 10px 18px;
+    border-radius: 18px;
+    font-size: 18px;
+    opacity: 0;
+  }
+
+  .capture-note.show {
+    animation: noteShow 2.2s ease-out forwards;
+  }
+
+  @keyframes noteShow {
+    0% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(12px);
+    }
+    25% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .viewer {
+    position: absolute;
+    bottom: 0;
+    width: 210px;
+    height: 330px;
+    z-index: 20;
+    filter: drop-shadow(0 10px 14px rgba(0,0,0,0.55));
+  }
+
+  .viewer-left {
+    left: 22%;
+  }
+
+  .viewer-right {
+    right: 22%;
+  }
+
+  .viewer .viewer-head {
+    position: absolute;
+    top: 35px;
+    left: 58px;
+    width: 92px;
+    height: 105px;
+    background: #d9b18d;
+    border-radius: 48% 48% 44% 44%;
+  }
+
+  .viewer .hair {
+    position: absolute;
+    top: 20px;
+    left: 45px;
+    width: 120px;
+    height: 85px;
+    background: #1a1a1a;
+    border-radius: 55% 55% 30% 30%;
+    z-index: 3;
+  }
+
+  .viewer-left .hair {
+    background: #e9d4a3;
+  }
+
+  .viewer .body-shape {
+    position: absolute;
+    bottom: 0;
+    left: 25px;
+    width: 160px;
+    height: 190px;
+    background: #f1f1f1;
+    border-radius: 80px 80px 0 0;
+  }
+
+  .viewer-left .body-shape {
+    background: #101010;
+  }
+
+  .viewer-face {
+    position: absolute;
+    top: 84px;
+    left: 70px;
+    width: 70px;
+    height: 22px;
+    z-index: 4;
+  }
+
+  .viewer-face::before,
+  .viewer-face::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    width: 7px;
+    height: 7px;
+    background: #111;
+    border-radius: 50%;
+  }
+
+  .viewer-face::before {
+    left: 10px;
+  }
+
+  .viewer-face::after {
+    right: 10px;
+  }
+
+  .thumb-arm {
+    position: absolute;
+    width: 50px;
+    height: 90px;
+    border-radius: 30px;
+    background: #d9b18d;
+    z-index: 24;
+    opacity: 0;
+    transform-origin: bottom center;
+  }
+
+  .viewer-left .thumb-arm {
+    right: 10px;
+    bottom: 115px;
+  }
+
+  .viewer-right .thumb-arm {
+    left: 10px;
+    bottom: 115px;
+  }
+
+  .thumb-arm::before {
+    content: "👍";
+    position: absolute;
+    top: -42px;
+    left: -4px;
+    font-size: 44px;
+  }
+
+  .viewer.thumb-up .thumb-arm {
+    animation: thumbUp 0.9s ease-out forwards;
+  }
+
+  @keyframes thumbUp {
+    from {
+      opacity: 0;
+      transform: rotate(0deg) translateY(60px);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(-20deg) translateY(0);
+    }
+  }
+
+  /* 拍照后鱼：左右两边游出，鱼头相对 */
+  .capture-fish {
+    position: absolute;
+    width: 430px;
+    height: 220px;
+    z-index: 12;
+    opacity: 0;
+    --bigFishColor: #23d7ff;
+  }
+
+  /* 默认鱼头朝右：左边游出的鱼使用默认方向 */
+  .capture-fish::before {
+    content: "";
+    position: absolute;
+    left: 90px;
+    top: 60px;
+    width: 245px;
+    height: 115px;
+    border: 5px solid var(--bigFishColor);
+    border-radius: 48% 58% 58% 48%;
+    background: rgba(35, 215, 255, 0.08);
+    box-shadow:
+      0 0 28px var(--bigFishColor),
+      inset 0 0 24px rgba(35, 215, 255, 0.35);
+  }
+
+  /* 三角尾巴在左边 */
+  .capture-fish::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 72px;
+    width: 82px;
+    height: 90px;
+    border: 5px solid var(--bigFishColor);
+    clip-path: polygon(100% 50%, 0 0, 28% 50%, 0 100%);
+    background: rgba(35, 215, 255, 0.06);
+    box-shadow: 0 0 26px var(--bigFishColor);
+  }
+
+  .big-fish-line {
+    position: absolute;
+    left: 280px;
+    top: 66px;
+    width: 3px;
+    height: 102px;
+    background: var(--bigFishColor);
+    opacity: 0.9;
+    z-index: 16;
+  }
+
+  .big-fish-eye {
+    position: absolute;
+    left: 306px;
+    top: 110px;
+    width: 12px;
+    height: 12px;
+    background: #000;
+    border-radius: 50%;
+    z-index: 17;
+  }
+
+  .big-top-fin {
+    position: absolute;
+    left: 195px;
+    top: 26px;
+    width: 58px;
+    height: 42px;
+    border: 5px solid var(--bigFishColor);
+    clip-path: polygon(0 100%, 100% 20%, 82% 100%);
+    background: rgba(35, 215, 255, 0.05);
+    box-shadow: 0 0 18px var(--bigFishColor);
+    z-index: 15;
+  }
+
+  .big-bottom-fin {
+    position: absolute;
+    left: 195px;
+    top: 168px;
+    width: 58px;
+    height: 42px;
+    border: 5px solid var(--bigFishColor);
+    clip-path: polygon(0 0, 82% 0, 100% 80%);
+    background: rgba(35, 215, 255, 0.05);
+    box-shadow: 0 0 18px var(--bigFishColor);
+    z-index: 15;
+  }
+
+  .capture-fish-left {
+    left: -460px;
+    top: 35%;
+  }
+
+  .capture-fish-right {
+    left: calc(100% + 80px);
+    top: 35%;
+  }
+
+  .capture-fish.swim-to-left {
+    animation: swimFromLeft 3.6s ease-in-out forwards;
+  }
+
+  .capture-fish.swim-to-right {
+    animation: swimFromRight 3.6s ease-in-out forwards;
+  }
+
+  @keyframes swimFromLeft {
+    0% {
+      left: -460px;
+      top: 35%;
+      opacity: 0;
+      transform: scale(0.86) rotate(-3deg);
+    }
+    20% {
+      opacity: 1;
+    }
+    72% {
+      left: 16%;
+      top: 35%;
+      transform: scale(1) rotate(2deg);
+    }
+    100% {
+      left: 19%;
+      top: 35%;
+      opacity: 1;
+      transform: scale(1.03) rotate(0deg);
+    }
+  }
+
+  /* 右边鱼镜像，鱼头朝左 */
+  @keyframes swimFromRight {
+    0% {
+      left: calc(100% + 80px);
+      top: 35%;
+      opacity: 0;
+      transform: scaleX(-1) scale(0.86) rotate(3deg);
+    }
+    20% {
+      opacity: 1;
+    }
+    72% {
+      left: 54%;
+      top: 35%;
+      transform: scaleX(-1) scale(1) rotate(-2deg);
+    }
+    100% {
+      left: 51%;
+      top: 35%;
+      opacity: 1;
+      transform: scaleX(-1) scale(1.03) rotate(0deg);
+    }
+  }
+
+  .fish-avatar {
+    position: absolute;
+    left: 178px;
+    top: 82px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    z-index: 20;
+    opacity: 0;
+    transform: scale(0.4);
+    transition: 0.6s ease;
+  }
+
+  .capture-fish.show-avatar .fish-avatar {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .black-smile {
+    background: #050505;
+    border: 3px solid rgba(255,255,255,0.75);
+  }
+
+  .white-smile {
+    background: #f7f7f7;
+    border: 3px solid rgba(0,0,0,0.65);
+  }
+
+  .fish-avatar::before,
+  .fish-avatar::after {
+    content: "";
+    position: absolute;
+    top: 24px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .black-smile::before,
+  .black-smile::after {
+    background: white;
+  }
+
+  .white-smile::before,
+  .white-smile::after {
+    background: black;
+  }
+
+  .fish-avatar::before {
+    left: 22px;
+  }
+
+  .fish-avatar::after {
+    right: 22px;
+  }
+
+  .smile-mouth {
+    position: absolute;
+    left: 21px;
+    top: 38px;
+    width: 30px;
+    height: 15px;
+    border-bottom: 4px solid currentColor;
+    border-radius: 0 0 30px 30px;
+  }
+
+  .black-smile .smile-mouth {
+    color: white;
+  }
+
+  .white-smile .smile-mouth {
+    color: black;
+  }
+
+  .capture-bubble {
+    position: absolute;
+    border: 2px solid rgba(100,220,255,0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(100,220,255,0.7);
+    animation: cameraBubble 6s linear infinite;
+    z-index: 5;
+  }
+
+  @keyframes cameraBubble {
+    from {
+      transform: translateY(120px);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    to {
+      transform: translateY(-320px);
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+  <div class="scene" id="mainScene">
+    <div class="ceiling"></div>
+
+    <div class="back-wall">
+      <div class="front-screen">
+        <div class="school-text">SCHOOL</div>
+        <div class="school-building"></div>
+
+        <div class="screen-fish blue" style="top: 20%; left: 5%;">
+          <div class="fish-head-line"></div>
+          <div class="fish-fin top-fin"></div>
+          <div class="fish-fin bottom-fin"></div>
+          <div class="eye"></div>
+        </div>
+
+        <div class="screen-fish pink" style="top: 38%; left: 30%;">
+          <div class="fish-head-line"></div>
+          <div class="fish-fin top-fin"></div>
+          <div class="fish-fin bottom-fin"></div>
+          <div class="eye"></div>
+        </div>
+
+        <div class="seaweed tall" style="left: 12%;"></div>
+        <div class="seaweed" style="left: 82%;"></div>
+        <div class="coral" style="left: 68%;"></div>
+        <div class="bubble large" style="left: 26%; animation-delay: 0.7s;"></div>
+        <div class="bubble small" style="left: 74%; animation-delay: 1.4s;"></div>
+      </div>
+    </div>
+
+    <div class="side-floor-left"></div>
+    <div class="side-floor-right"></div>
+
+    <div class="side-screen left-screen">
+      <div class="camera-hotspot" id="cameraHotspot">
+        <div class="camera-icon"></div>
+        <div class="camera-label">look here</div>
+      </div>
+
+      <div class="screen-fish yellow" style="top: 26%; left: 10%;">
+        <div class="fish-head-line"></div>
+        <div class="fish-fin top-fin"></div>
+        <div class="fish-fin bottom-fin"></div>
+        <div class="eye"></div>
+      </div>
+
+      <div class="screen-fish blue" style="top: 50%; left: -20%;">
+        <div class="fish-head-line"></div>
+        <div class="fish-fin top-fin"></div>
+        <div class="fish-fin bottom-fin"></div>
+        <div class="eye"></div>
+      </div>
+
+      <div class="screen-fish pink" style="top: 68%; left: 25%;">
+        <div class="fish-head-line"></div>
+        <div class="fish-fin top-fin"></div>
+        <div class="fish-fin bottom-fin"></div>
+        <div class="eye"></div>
+      </div>
+
+      <div class="seaweed tall" style="left: 14%;"></div>
+      <div class="seaweed" style="left: 34%;"></div>
+      <div class="seaweed small" style="left: 78%;"></div>
+      <div class="coral" style="left: 48%;"></div>
+      <div class="bubble small" style="left: 22%; animation-delay: 0s;"></div>
+      <div class="bubble" style="left: 55%; animation-delay: 1.3s;"></div>
+      <div class="bubble large" style="left: 80%; animation-delay: 2.4s;"></div>
+    </div>
+
+    <div class="side-screen right-screen">
+      <div class="screen-fish blue" style="top: 25%; left: -15%;">
+        <div class="fish-head-line"></div>
+        <div class="fish-fin top-fin"></div>
+        <div class="fish-fin bottom-fin"></div>
+        <div class="eye"></div>
+      </div>
+
+      <div class="screen-fish pink" style="top: 48%; left: 12%;">
+        <div class="fish-head-line"></div>
+        <div class="fish-fin top-fin"></div>
+        <div class="fish-fin bottom-fin"></div>
+        <div class="eye"></div>
+      </div>
+
+      <div class="screen-fish yellow" style="top: 70%; left: -25%;">
+        <div class="fish-head-line"></div>
+        <div class="fish-fin top-fin"></div>
+        <div class="fish-fin bottom-fin"></div>
+        <div class="eye"></div>
+      </div>
+
+      <div class="seaweed tall" style="left: 72%;"></div>
+      <div class="seaweed" style="left: 50%;"></div>
+      <div class="seaweed small" style="left: 18%;"></div>
+      <div class="coral" style="left: 24%;"></div>
+      <div class="bubble small" style="left: 28%; animation-delay: 0.5s;"></div>
+      <div class="bubble" style="left: 58%; animation-delay: 1.7s;"></div>
+      <div class="bubble large" style="left: 84%; animation-delay: 2.8s;"></div>
+    </div>
+
+    <div class="path"></div>
+
+    <div class="mode-panel">
+      <div class="mode-title">Interaction Modes</div>
+      <div class="mode-buttons">
+        <button data-mode="single">single</button>
+        <button data-mode="hard">hard</button>
+        <button data-mode="friends">with friends</button>
+        <button data-mode="groups">groups</button>
+      </div>
+    </div>
+
+    <div id="peopleLayer"></div>
+
+    <div class="hint" id="hint">Choose a mode, or click “look here” on the left screen</div>
+
+    <div class="mode-description" id="modeDescription">
+      首页：四周墙壁和左右电子屏幕固定。选择左上角按钮后，小人从起点走到尽头，水波根据模式变化。
+    </div>
+  </div>
+
+  <div class="camera-view hidden" id="cameraView">
+    <div class="camera-wall"></div>
+
+    <div class="camera-view-title">
+      Camera View: single electronic screen
+    </div>
+
+    <button class="back-button" id="backButton">Back to walkway</button>
+    <button class="thumb-button" id="thumbButton">👍 Raise thumbs</button>
+
+    <div class="single-screen" id="singleScreen">
+      <div class="capture-fish capture-fish-left" id="captureFishLeft">
+        <div class="big-fish-line"></div>
+        <div class="big-fish-eye"></div>
+        <div class="big-top-fin"></div>
+        <div class="big-bottom-fin"></div>
+        <div class="fish-avatar black-smile">
+          <div class="smile-mouth"></div>
+        </div>
+      </div>
+
+      <div class="capture-fish capture-fish-right" id="captureFishRight">
+        <div class="big-fish-line"></div>
+        <div class="big-fish-eye"></div>
+        <div class="big-top-fin"></div>
+        <div class="big-bottom-fin"></div>
+        <div class="fish-avatar white-smile">
+          <div class="smile-mouth"></div>
+        </div>
+      </div>
+
+      <div class="capture-bubble" style="left: 48%; bottom: 20%; width: 16px; height: 16px; animation-delay: 0s;"></div>
+      <div class="capture-bubble" style="left: 52%; bottom: 18%; width: 26px; height: 26px; animation-delay: 1s;"></div>
+      <div class="capture-bubble" style="left: 45%; bottom: 22%; width: 10px; height: 10px; animation-delay: 2s;"></div>
+      <div class="capture-bubble" style="left: 56%; bottom: 15%; width: 18px; height: 18px; animation-delay: 3s;"></div>
+    </div>
+
+    <div class="viewer viewer-left" id="viewerLeft">
+      <div class="thumb-arm"></div>
+      <div class="hair"></div>
+      <div class="viewer-head"></div>
+      <div class="viewer-face"></div>
+      <div class="body-shape"></div>
+    </div>
+
+    <div class="viewer viewer-right" id="viewerRight">
+      <div class="thumb-arm"></div>
+      <div class="hair"></div>
+      <div class="viewer-head"></div>
+      <div class="viewer-face"></div>
+      <div class="body-shape"></div>
+    </div>
+
+    <div class="capture-note" id="captureNote">
+      Captured! Two fish swim from both sides and meet in front of you.
+    </div>
+
+    <div class="camera-flash" id="cameraFlash"></div>
+  </div>
+
+<script>
+  const mainScene = document.getElementById("mainScene");
+  const cameraView = document.getElementById("cameraView");
+  const cameraHotspot = document.getElementById("cameraHotspot");
+  const backButton = document.getElementById("backButton");
+  const thumbButton = document.getElementById("thumbButton");
+
+  const cameraFlash = document.getElementById("cameraFlash");
+  const captureFishLeft = document.getElementById("captureFishLeft");
+  const captureFishRight = document.getElementById("captureFishRight");
+  const viewerLeft = document.getElementById("viewerLeft");
+  const viewerRight = document.getElementById("viewerRight");
+  const captureNote = document.getElementById("captureNote");
+
+  const peopleLayer = document.getElementById("peopleLayer");
+  const hint = document.getElementById("hint");
+  const modeDescription = document.getElementById("modeDescription");
+  const buttons = document.querySelectorAll(".mode-buttons button");
+
+  let isRunning = false;
+  let runningTimers = [];
+
+  const pathPoints = [
+    { left: 50, bottom: 8 },
+    { left: 50, bottom: 15 },
+    { left: 50, bottom: 22 },
+    { left: 50, bottom: 29 },
+    { left: 50, bottom: 36 },
+    { left: 50, bottom: 43 },
+    { left: 50, bottom: 50 },
+    { left: 50, bottom: 57 },
+    { left: 50, bottom: 62 }
+  ];
+
+  const modeSettings = {
+    single: {
+      people: 1,
+      offsets: [0],
+      appearDelays: [0],
+      rippleCount: 1,
+      rippleSize: 260,
+      rippleDuration: 2600,
+      rippleGap: 0,
+      rippleAlpha: 0.42,
+      rippleStroke: 3,
+      stepTime: 1100,
+      soundPower: 0.08,
+      description: "single：一个小人从起点走向尽头。每一步脚下的水波浅浅晕开，反馈轻柔。"
+    },
+
+    hard: {
+      people: 1,
+      offsets: [0],
+      appearDelays: [0],
+      rippleCount: 4,
+      rippleSize: 660,
+      rippleDuration: 3600,
+      rippleGap: 260,
+      rippleAlpha: 0.76,
+      rippleStroke: 4,
+      stepTime: 1250,
+      soundPower: 0.16,
+      description: "hard：一个小人从起点走向尽头。每一步产生更多、更大、更慢的涟漪。"
+    },
+
+    friends: {
+      people: 2,
+      offsets: [-2.5, 2.5],
+      appearDelays: [0, 1500],
+      rippleCount: 2,
+      rippleSize: 430,
+      rippleDuration: 3100,
+      rippleGap: 300,
+      rippleAlpha: 0.62,
+      rippleStroke: 3,
+      stepTime: 1200,
+      soundPower: 0.11,
+      description: "with friends：开始是一个人，之后变成两个人一起通过步道，水波在两人脚下交替扩散。"
+    },
+
+    groups: {
+      people: 5,
+      offsets: [-5, -2.5, 0, 2.5, 5],
+      appearDelays: [0, 1000, 1700, 2400, 3100],
+      rippleCount: 2,
+      rippleSize: 500,
+      rippleDuration: 3300,
+      rippleGap: 320,
+      rippleAlpha: 0.68,
+      rippleStroke: 3,
+      stepTime: 1180,
+      soundPower: 0.12,
+      description: "groups：一个人逐渐变成多人一起走。多个水波同时出现，表现群体互动。"
+    }
+  };
+
+  buttons.forEach(button => {
+    button.addEventListener("click", () => {
+      const mode = button.dataset.mode;
+      startMode(mode);
+
+      buttons.forEach(btn => btn.classList.remove("active"));
+      button.classList.add("active");
+    });
+  });
+
+  cameraHotspot.addEventListener("click", () => {
+    clearAll();
+    resetCaptureView();
+    mainScene.classList.add("hidden");
+    cameraView.classList.remove("hidden");
+    playRippleSound(0.13, 1.1);
+  });
+
+  backButton.addEventListener("click", () => {
+    cameraView.classList.add("hidden");
+    mainScene.classList.remove("hidden");
+    hint.textContent = "Choose a mode, or click “look here” on the left screen";
+  });
+
+  thumbButton.addEventListener("click", () => {
+    startCaptureSequence();
+  });
+
+  function startCaptureSequence() {
+    resetCaptureView();
+
+    viewerLeft.classList.add("thumb-up");
+    viewerRight.classList.add("thumb-up");
+
+    setTimeout(() => {
+      cameraFlash.classList.add("flash-active");
+      playCameraFlashSound();
+    }, 850);
+
+    setTimeout(() => {
+      cameraFlash.classList.remove("flash-active");
+    }, 1700);
+
+    setTimeout(() => {
+      captureFishLeft.classList.add("swim-to-left");
+      captureFishRight.classList.add("swim-to-right");
+      playRippleSound(0.15, 1.6);
+    }, 1300);
+
+    setTimeout(() => {
+      captureFishLeft.classList.add("show-avatar");
+      captureFishRight.classList.add("show-avatar");
+      captureNote.classList.add("show");
+      playRippleSound(0.1, 1.2);
+    }, 5000);
+  }
+
+  function resetCaptureView() {
+    viewerLeft.classList.remove("thumb-up");
+    viewerRight.classList.remove("thumb-up");
+
+    captureFishLeft.classList.remove("swim-to-left", "show-avatar");
+    captureFishRight.classList.remove("swim-to-right", "show-avatar");
+
+    captureNote.classList.remove("show");
+    cameraFlash.classList.remove("flash-active");
+
+    void captureFishLeft.offsetWidth;
+    void captureFishRight.offsetWidth;
+  }
+
+  function startMode(mode) {
+    clearAll();
+
+    const config = modeSettings[mode];
+
+    isRunning = true;
+    hint.textContent = "Animation running...";
+    modeDescription.textContent = config.description;
+
+    for (let i = 0; i < config.people; i++) {
+      const person = createPerson(i);
+      person.classList.add("hidden-person");
+      peopleLayer.appendChild(person);
+
+      setPersonPosition(person, pathPoints[0], config.offsets[i], 0);
+
+      const timer = setTimeout(() => {
+        person.classList.remove("hidden-person");
+        walkPerson(person, config, config.offsets[i]);
+      }, config.appearDelays[i]);
+
+      runningTimers.push(timer);
+    }
+
+    const totalTime =
+      config.appearDelays[config.appearDelays.length - 1] +
+      pathPoints.length * config.stepTime + 2200;
+
+    const endTimer = setTimeout(() => {
+      isRunning = false;
+      hint.textContent = "Choose another mode to replay";
+    }, totalTime);
+
+    runningTimers.push(endTimer);
+  }
+
+  function createPerson(index) {
+    const person = document.createElement("div");
+    person.className = "person";
+    person.innerHTML = `
+      <div class="head"></div>
+      <div class="body"></div>
+      <div class="leg left"></div>
+      <div class="leg right"></div>
+    `;
+
+    const colors = ["#ffffff", "#b8f3ff", "#ffd166", "#f7a1c4", "#b5ead7"];
+    person.querySelector(".body").style.background = colors[index] || "#ffffff";
+
+    return person;
+  }
+
+  async function walkPerson(person, config, offset) {
+    for (let i = 1; i < pathPoints.length; i++) {
+      if (!isRunning) return;
+
+      const point = pathPoints[i];
+      const progress = i / (pathPoints.length - 1);
+
+      setPersonPosition(person, point, offset, progress);
+
+      person.classList.remove("step-a", "step-b");
+      person.classList.add(i % 2 === 0 ? "step-a" : "step-b");
+
+      await wait(config.stepTime);
+
+      const rect = person.getBoundingClientRect();
+      const rippleX = rect.left + rect.width / 2;
+      const rippleY = rect.top + rect.height * 0.92;
+
+      createRipples(rippleX, rippleY, config);
+      createSoundText(rippleX, rippleY, config);
+      playRippleSound(config.soundPower, config.rippleCount >= 4 ? 0.9 : 0.65);
+    }
+
+    person.classList.remove("step-a", "step-b");
+  }
+
+  function setPersonPosition(person, point, offset, progress) {
+    const perspectiveOffset = offset * (1 - progress * 0.65);
+    const scale = 1 - progress * 0.42;
+
+    person.style.left = point.left + perspectiveOffset + "%";
+    person.style.bottom = point.bottom + "%";
+    person.style.transform = `translateX(-50%) scale(${scale})`;
+  }
+
+  function createRipples(x, y, config) {
+    for (let i = 0; i < config.rippleCount; i++) {
+      const timer = setTimeout(() => {
+        const ripple = document.createElement("div");
+        ripple.className = "ripple";
+
+        ripple.style.left = x + "px";
+        ripple.style.top = y + "px";
+        ripple.style.setProperty("--size", config.rippleSize + i * 70 + "px");
+        ripple.style.setProperty("--duration", config.rippleDuration + "ms");
+        ripple.style.setProperty("--alpha", Math.max(config.rippleAlpha - i * 0.12, 0.22));
+        ripple.style.setProperty("--stroke", config.rippleStroke + "px");
+
+        mainScene.appendChild(ripple);
+
+        setTimeout(() => {
+          ripple.remove();
+        }, config.rippleDuration + 200);
+      }, i * config.rippleGap);
+
+      runningTimers.push(timer);
+    }
+  }
+
+  function createSoundText(x, y, config) {
+    const sound = document.createElement("div");
+    sound.className = "sound";
+    sound.innerText = config.rippleCount >= 4 ? "strong water ripple" : "water ripple";
+    sound.style.left = x + 24 + "px";
+    sound.style.top = y - 60 + "px";
+
+    mainScene.appendChild(sound);
+
+    setTimeout(() => {
+      sound.remove();
+    }, 1400);
+  }
+
+  function playRippleSound(power = 0.1, duration = 0.7) {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const bufferSize = audioCtx.sampleRate * duration;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.32));
+    }
+
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(850, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + duration);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(power, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    noise.start();
+    noise.stop(audioCtx.currentTime + duration);
+  }
+
+  function playCameraFlashSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+
+    gain.gain.setValueAtTime(0.16, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+
+    oscillator.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.18);
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => {
+      const timer = setTimeout(resolve, ms);
+      runningTimers.push(timer);
+    });
+  }
+
+  function clearAll() {
+    isRunning = false;
+
+    runningTimers.forEach(timer => clearTimeout(timer));
+    runningTimers = [];
+
+    peopleLayer.innerHTML = "";
+
+    document.querySelectorAll(".ripple, .sound").forEach(el => el.remove());
+  }
+</script>
+</body>
+</html>
