@@ -903,7 +903,6 @@
     }
   }
 
-  /* 拍照后鱼：左右两边游出，鱼头相对 */
   .capture-fish {
     position: absolute;
     width: 430px;
@@ -913,7 +912,6 @@
     --bigFishColor: #23d7ff;
   }
 
-  /* 默认鱼头朝右：左边游出的鱼使用默认方向 */
   .capture-fish::before {
     content: "";
     position: absolute;
@@ -929,7 +927,6 @@
       inset 0 0 24px rgba(35, 215, 255, 0.35);
   }
 
-  /* 三角尾巴在左边 */
   .capture-fish::after {
     content: "";
     position: absolute;
@@ -1032,7 +1029,6 @@
     }
   }
 
-  /* 右边鱼镜像，鱼头朝左 */
   @keyframes swimFromRight {
     0% {
       left: calc(100% + 80px);
@@ -1274,7 +1270,7 @@
     <div class="hint" id="hint">Choose a mode, or click “look here” on the left screen</div>
 
     <div class="mode-description" id="modeDescription">
-      首页：四周墙壁和左右电子屏幕固定。选择左上角按钮后，小人从起点走到尽头，水波根据模式变化。
+      Home view: the walls and electronic screens remain fixed. Choose a mode from the top-left buttons to start the interaction.
     </div>
   </div>
 
@@ -1282,11 +1278,11 @@
     <div class="camera-wall"></div>
 
     <div class="camera-view-title">
-      Camera View: single electronic screen
+      Camera View: Single Electronic Screen
     </div>
 
-    <button class="back-button" id="backButton">Back to walkway</button>
-    <button class="thumb-button" id="thumbButton">👍 Raise thumbs</button>
+    <button class="back-button" id="backButton">Back to Walkway</button>
+    <button class="thumb-button" id="thumbButton">👍 Raise Thumbs</button>
 
     <div class="single-screen" id="singleScreen">
       <div class="capture-fish capture-fish-left" id="captureFishLeft">
@@ -1385,7 +1381,7 @@
       rippleStroke: 3,
       stepTime: 1100,
       soundPower: 0.08,
-      description: "single：一个小人从起点走向尽头。每一步脚下的水波浅浅晕开，反馈轻柔。"
+      description: "single: One person walks from the entrance to the end. A soft, shallow ripple appears under each step."
     },
 
     hard: {
@@ -1400,7 +1396,7 @@
       rippleStroke: 4,
       stepTime: 1250,
       soundPower: 0.16,
-      description: "hard：一个小人从起点走向尽头。每一步产生更多、更大、更慢的涟漪。"
+      description: "hard: One person walks from the entrance to the end. Each step creates larger, stronger, and denser ripples."
     },
 
     friends: {
@@ -1415,7 +1411,7 @@
       rippleStroke: 3,
       stepTime: 1200,
       soundPower: 0.11,
-      description: "with friends：开始是一个人，之后变成两个人一起通过步道，水波在两人脚下交替扩散。"
+      description: "with friends: The interaction starts with one person, then becomes two people walking together. Ripples appear under both users."
     },
 
     groups: {
@@ -1430,7 +1426,7 @@
       rippleStroke: 3,
       stepTime: 1180,
       soundPower: 0.12,
-      description: "groups：一个人逐渐变成多人一起走。多个水波同时出现，表现群体互动。"
+      description: "groups: One person gradually becomes a group. Multiple ripples appear at the same time to show shared interaction."
     }
   };
 
@@ -1577,7 +1573,7 @@
 
       createRipples(rippleX, rippleY, config);
       createSoundText(rippleX, rippleY, config);
-      playRippleSound(config.soundPower, config.rippleCount >= 4 ? 0.9 : 0.65);
+      playFlowingWaterSound(config.soundPower, config.rippleCount >= 4 ? 1.8 : 1.4);
     }
 
     person.classList.remove("step-a", "step-b");
@@ -1619,7 +1615,7 @@
   function createSoundText(x, y, config) {
     const sound = document.createElement("div");
     sound.className = "sound";
-    sound.innerText = config.rippleCount >= 4 ? "strong water ripple" : "water ripple";
+    sound.innerText = config.rippleCount >= 4 ? "strong flowing water" : "flowing water";
     sound.style.left = x + 24 + "px";
     sound.style.top = y - 60 + "px";
 
@@ -1659,6 +1655,45 @@
 
     noise.start();
     noise.stop(audioCtx.currentTime + duration);
+  }
+
+  function playFlowingWaterSound(power = 0.1, duration = 1.5) {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const bufferSize = audioCtx.sampleRate * duration;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      const noise = Math.random() * 2 - 1;
+      const fadeIn = Math.min(i / (audioCtx.sampleRate * 0.25), 1);
+      const fadeOut = Math.exp(-i / (bufferSize * 0.9));
+      data[i] = noise * fadeIn * fadeOut;
+    }
+
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+
+    const lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.setValueAtTime(1200, audioCtx.currentTime);
+
+    const bandpass = audioCtx.createBiquadFilter();
+    bandpass.type = "bandpass";
+    bandpass.frequency.setValueAtTime(450, audioCtx.currentTime);
+    bandpass.Q.setValueAtTime(0.8, audioCtx.currentTime);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(power * 0.8, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+    noiseSource.connect(lowpass);
+    lowpass.connect(bandpass);
+    bandpass.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    noiseSource.start();
+    noiseSource.stop(audioCtx.currentTime + duration);
   }
 
   function playCameraFlashSound() {
